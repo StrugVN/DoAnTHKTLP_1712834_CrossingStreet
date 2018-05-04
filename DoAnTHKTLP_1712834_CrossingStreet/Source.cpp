@@ -2,6 +2,7 @@
 #include<cstdlib>
 #include <SFML/Graphics.hpp>
 #include <SFML/Audio.hpp>
+#include <Windows.h>
 
 using namespace std;
 using namespace sf;
@@ -221,10 +222,10 @@ void Setup() {
 	Player.p = Sp[0];
 	Player.p.setPosition(Player.x, Player.y);
 
-	addCars(R1, cr1, 'R', 615, random(1,2+lv));
-	addCars(R2, cr2, 'R', 460, random(1,2+lv));
-	addCars(L3, cl3, 'L', 320, random(1,2+lv));
-	addCars(L4, cl4, 'L', 200, random(1,2+lv));
+	addCars(R1, cr1, 'R', 615, random(1 + lv - lv == 0 ? 0 : 1,3 + lv));
+	addCars(R2, cr2, 'R', 460, random(1 + lv - lv == 0 ? 0 : 1,3 + lv));
+	addCars(L3, cl3, 'L', 320, random(1 + lv - lv == 0 ? 0 : 1,3 + lv));
+	addCars(L4, cl4, 'L', 200, random(1 + lv - lv == 0 ? 0 : 1,3 + lv));
 }
 
 void DrawCars() {
@@ -303,9 +304,9 @@ void Move() {
 }
 
 void moveAcarR(Point &car) {
-	float x = (float)lv / 100;
-	if (car.x + 0.02 + x < 1024)
-		car.x += (0.02 + x);
+	float x = (float)lv / 2;
+	if (car.x + 1.2 + x < 1024)
+		car.x += (1 + x);
 	else {
 		car.p = C_R[random(0, 3)];
 		car.x = 0;
@@ -314,9 +315,9 @@ void moveAcarR(Point &car) {
 }
 
 void moveAcarL(Point &car) {
-	float x = (float)lv / 100;
-	if (car.x - 0.02 - x > 0)
-		car.x -= (0.02 + x);
+	float x = (float)lv / 2;
+	if (car.x - 1.2 - x > 0)
+		car.x -= (1 + x);
 	else {
 		car.p = C_L[random(0, 3)];
 		car.x = 1023;
@@ -454,6 +455,7 @@ void Run() {
 
 		if (CheckLose()) {
 			city.stop();
+			win = false;
 			crashed[0].s.play();
 			crashed[1].s.play();
 			Player.p = dead;
@@ -478,6 +480,7 @@ void Run() {
 			window.draw(finished[i].p);
 		window.draw(Player.p);
 		window.display();
+		Sleep(10);
 	}
 	if (win)
 		if (endgame)
