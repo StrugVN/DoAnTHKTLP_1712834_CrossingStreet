@@ -16,12 +16,15 @@ struct SndEff {
 	Sound s;
 };
 
-// Nền
-Texture background;
-Sprite BG;
+struct Sf {
+	Texture t;
+	Sprite s;
+};
 
-Texture MenuBG;
-Sprite Menu;
+// Main menu
+Sf BG;
+
+Sf menuBG;
 Music menu;
 
 Texture Title;
@@ -46,22 +49,24 @@ button Load;
 button Exit;
 
 // Player
-Texture P[12];
-Sprite Sp[12];
-Texture die;
-Sprite dead;
+Sf P[12];
+Sf dead;
 
 // Xe
-Texture CR[5], CL[4];
-Sprite C_R[5], C_L[4];
+Sf CR[4], CL[4];
+
+// Lost menu
+Sf l_menu;
+button r_menu;
+button retry;
 
 Event event;
 
 void LoadResources() {
-	background.loadFromFile("Res/Background.png");
-	BG.setTexture(background);
-	MenuBG.loadFromFile("Res/Menu.jpg");
-	Menu.setTexture(MenuBG);
+	BG.t.loadFromFile("Res/Background.png");
+	BG.s.setTexture(BG.t);
+	menuBG.t.loadFromFile("Res/Menu.jpg");
+	menuBG.s.setTexture(menuBG.t);
 	Title.loadFromFile("Res/name.png");
 	title.setTexture(Title);
 	title.setPosition(256, 150);
@@ -90,49 +95,68 @@ void LoadResources() {
 	Load.pressed.setPosition(496, 652);
 	Load.Curr = &Load.normal;
 
-	P[0].loadFromFile("Res/Up1.png");
-	P[1].loadFromFile("Res/Up2.png");
-	P[2].loadFromFile("Res/Up3.png");
-	P[3].loadFromFile("Res/Up2.png");
-	P[4].loadFromFile("Res/R1.png");
-	P[5].loadFromFile("Res/R2.png");
-	P[6].loadFromFile("Res/R3.png");
-	P[7].loadFromFile("Res/R2.png");
-	P[8].loadFromFile("Res/L1.png");
-	P[9].loadFromFile("Res/L2.png");
-	P[10].loadFromFile("Res/L3.png");
-	P[11].loadFromFile("Res/L2.png");
+	P[0].t.loadFromFile("Res/Up1.png");
+	P[1].t.loadFromFile("Res/Up2.png");
+	P[2].t.loadFromFile("Res/Up3.png");
+	P[3].t.loadFromFile("Res/Up2.png");
+	P[4].t.loadFromFile("Res/R1.png");
+	P[5].t.loadFromFile("Res/R2.png");
+	P[6].t.loadFromFile("Res/R3.png");
+	P[7].t.loadFromFile("Res/R2.png");
+	P[8].t.loadFromFile("Res/L1.png");
+	P[9].t.loadFromFile("Res/L2.png");
+	P[10].t.loadFromFile("Res/L3.png");
+	P[11].t.loadFromFile("Res/L2.png");
 	for (int i = 0; i < 12; i++) {
-		Sp[i].setTexture(P[i]);
-		Sp[i].setOrigin(Vector2f(Sp[i].getTexture()->getSize().x * 0.5, Sp[i].getTexture()->getSize().y*0.5));
+		P[i].s.setTexture(P[i].t);
+		P[i].s.setOrigin(Vector2f(P[i].s.getTexture()->getSize().x * 0.5, P[i].s.getTexture()->getSize().y*0.5));
 		if (i < 2 || i == 3)
-			Sp[i].setScale(2.0f, 2.0f);
+			P[i].s.setScale(2.0f, 2.0f);
 	}
 
-	CR[0].loadFromFile("Res/CarR1.png");
-	CR[1].loadFromFile("Res/CarR2.png");
-	CR[2].loadFromFile("Res/CarR3.png");
-	CR[3].loadFromFile("Res/CarR4.png");
+	CR[0].t.loadFromFile("Res/CarR1.png");
+	CR[1].t.loadFromFile("Res/CarR2.png");
+	CR[2].t.loadFromFile("Res/CarR3.png");
+	CR[3].t.loadFromFile("Res/CarR4.png");
 	for (int i = 0; i < 4; i++) {
-		C_R[i].setTexture(CR[i]);
-		C_R[i].setOrigin(Vector2f(C_R[i].getTexture()->getSize().x * 0.5, C_R[i].getTexture()->getSize().y*0.5));
-		C_R[i].scale(0.75f, 0.75f);
+		CR[i].s.setTexture(CR[i].t);
+		CR[i].s.setOrigin(Vector2f(CR[i].s.getTexture()->getSize().x * 0.5, CR[i].s.getTexture()->getSize().y*0.5));
+		CR[i].s.scale(0.75f, 0.75f);
 	}
 
-	CL[0].loadFromFile("Res/CarL1.png");
-	CL[1].loadFromFile("Res/CarL2.png");
-	CL[2].loadFromFile("Res/CarL3.png");
-	CL[3].loadFromFile("Res/CarL4.png");
+	CL[0].t.loadFromFile("Res/CarL1.png");
+	CL[1].t.loadFromFile("Res/CarL2.png");
+	CL[2].t.loadFromFile("Res/CarL3.png");
+	CL[3].t.loadFromFile("Res/CarL4.png");
 	for (int i = 0; i < 4; i++) {
-		C_L[i].setTexture(CL[i]);
-		C_L[i].setOrigin(Vector2f(C_L[i].getTexture()->getSize().x * 0.5, C_L[i].getTexture()->getSize().y*0.5));
-		C_L[i].scale(0.75f, 0.75f);
+		CL[i].s.setTexture(CL[i].t);
+		CL[i].s.setOrigin(Vector2f(CL[i].s.getTexture()->getSize().x * 0.5, CL[i].s.getTexture()->getSize().y*0.5));
+		CL[i].s.scale(0.75f, 0.75f);
 	}
 
-	die.loadFromFile("Res/dead.png");
-	dead.setTexture(die);
-	dead.setOrigin(Vector2f(dead.getTexture()->getSize().x * 0.5, dead.getTexture()->getSize().y*0.5));
-	dead.scale(2.0f, 2.0f);
+	dead.t.loadFromFile("Res/dead.png");
+	dead.s.setTexture(dead.t);
+	dead.s.setOrigin(Vector2f(dead.s.getTexture()->getSize().x * 0.5, dead.s.getTexture()->getSize().y*0.5));
+	dead.s.scale(2.0f, 2.0f);
+
+	l_menu.t.loadFromFile("Res/lose.jpg");
+	l_menu.s.setTexture(l_menu.t);
+
+	r_menu._normal.loadFromFile("Res/menu.png");
+	r_menu.normal.setTexture(r_menu._normal);
+	r_menu.normal.setPosition(70, 83);
+	r_menu._pressed.loadFromFile("Res/menuP.png");
+	r_menu.pressed.setTexture(r_menu._pressed);
+	r_menu.pressed.setPosition(70, 83);
+	r_menu.Curr = &r_menu.normal;
+
+	retry._normal.loadFromFile("Res/again.png");
+	retry.normal.setTexture(retry._normal);
+	retry.normal.setPosition(618, 36);
+	retry._pressed.loadFromFile("Res/againP.png");
+	retry.pressed.setTexture(retry._pressed);
+	retry.pressed.setPosition(618, 36);
+	retry.Curr = &retry.normal;
 	
 	menu.openFromFile("Res/menu.wav");
 	menu.setVolume(50);
@@ -207,9 +231,9 @@ void addCars(Point *&A, int &n, char c, int yrow, int count) {
 		A[n - 1].x = random(pos, pos + mid-CW);
 		A[n - 1].y = yrow;
 		if (c == 'L' || c == 'l')
-			A[n - 1].p = C_L[random(0, 3)];
+			A[n - 1].p = CL[random(0, 3)].s;
 		else
-			A[n - 1].p = C_R[random(0, 3)];
+			A[n - 1].p = CR[random(0, 3)].s;
 		A[n - 1].p.setPosition(A[n - 1].x, A[n - 1].y);
 		pos += mid + CW;
 		cout << "Car added at " << A[n - 1].x << " " << A[n - 1].y << endl;
@@ -219,13 +243,13 @@ void addCars(Point *&A, int &n, char c, int yrow, int count) {
 void Setup() {
 	Player.x = 500;
 	Player.y = 720;
-	Player.p = Sp[0];
+	Player.p = P[0].s;
 	Player.p.setPosition(Player.x, Player.y);
 
-	addCars(R1, cr1, 'R', 615, random(1 + lv - lv == 0 ? 0 : 1,3 + lv));
-	addCars(R2, cr2, 'R', 460, random(1 + lv - lv == 0 ? 0 : 1,3 + lv));
-	addCars(L3, cl3, 'L', 320, random(1 + lv - lv == 0 ? 0 : 1,3 + lv));
-	addCars(L4, cl4, 'L', 200, random(1 + lv - lv == 0 ? 0 : 1,3 + lv));
+	addCars(R1, cr1, 'R', 615, random(1 + lv,3 + lv));
+	addCars(R2, cr2, 'R', 460, random(1 + lv,3 + lv));
+	addCars(L3, cl3, 'L', 320, random(1 + lv,3 + lv));
+	addCars(L4, cl4, 'L', 200, random(1 + lv,3 + lv));
 }
 
 void DrawCars() {
@@ -245,7 +269,7 @@ void Move() {
 		static int last = 0;
 		if (Player.x - 1 > 130) {
 			Player.x -= 8;
-			Player.p = Sp[8 + last];
+			Player.p = P[8 + last].s;
 			last++;
 			if (last >= 4)
 				last = 0;
@@ -257,7 +281,7 @@ void Move() {
 		static int last = 0;
 		if (Player.x + 1 < 1024) {
 			Player.x += 8;
-			Player.p = Sp[4 + last];
+			Player.p = P[4 + last].s;
 			last++;
 			if (last >= 4)
 				last = 0;
@@ -270,7 +294,7 @@ void Move() {
 		static int last = 0;
 		if (Player.y + 1 < 760) {
 			Player.y += 12;
-			Player.p = Sp[last];
+			Player.p = P[last].s;
 			last++;
 			if (last >= 4)
 				last = 0;
@@ -283,7 +307,7 @@ void Move() {
 		static int last = 0;
 		if (Player.y - 1 > 0) {
 			Player.y -= 12;
-			Player.p = Sp[last];
+			Player.p = P[last].s;
 			last++;
 			if (last >= 4)
 				last = 0;
@@ -308,7 +332,7 @@ void moveAcarR(Point &car) {
 	if (car.x + 1.2 + x < 1024)
 		car.x += (1 + x);
 	else {
-		car.p = C_R[random(0, 3)];
+		car.p = CR[random(0, 3)].s;
 		car.x = 0;
 	}
 	car.p.setPosition(car.x, car.y);
@@ -319,7 +343,7 @@ void moveAcarL(Point &car) {
 	if (car.x - 1.2 - x > 0)
 		car.x -= (1 + x);
 	else {
-		car.p = C_L[random(0, 3)];
+		car.p = CL[random(0, 3)].s;
 		car.x = 1023;
 	}
 	car.p.setPosition(car.x, car.y);
@@ -375,7 +399,7 @@ void RunMenu() {
 		}
 
 		window.clear();
-		window.draw(Menu);
+		window.draw(menuBG.s);
 		window.draw(title);
 		window.draw(*Start.Curr);
 		window.draw(*Load.Curr);
@@ -434,6 +458,16 @@ void Pross_Win() {
 void Pross_Lose() {
 	// Do st
 	again = false;
+	while (true) {
+
+
+		window.clear();
+		window.draw(l_menu.s);
+		window.draw(*r_menu.Curr);
+		window.draw(*retry.Curr);
+		window.draw(*Exit.Curr);
+		window.display();
+	}
 }
 
 void Pross_End() {
@@ -458,11 +492,11 @@ void Run() {
 			win = false;
 			crashed[0].s.play();
 			crashed[1].s.play();
-			Player.p = dead;
+			Player.p = dead.s;
 			Player.p.setPosition(Player.x, Player.y);
 
 			window.clear();
-			window.draw(BG);
+			window.draw(BG.s);
 			DrawCars();
 			for (int i = 0; i < fn; i++)
 				window.draw(finished[i].p);
@@ -474,7 +508,7 @@ void Run() {
 		if (CheckWin(lv+1))
 			break;
 		window.clear();
-		window.draw(BG);
+		window.draw(BG.s);
 		DrawCars();
 		for (int i = 0; i < fn; i++)
 			window.draw(finished[i].p);
