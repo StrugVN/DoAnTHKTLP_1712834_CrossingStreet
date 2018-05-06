@@ -1,4 +1,7 @@
-﻿#include<iostream>
+﻿#pragma warning(push)
+#pragma warning(disable: 4244) // possible loss of data - nhiều convert tắt cho bớt khung Output
+
+#include<iostream>
 #include<cstdlib>
 #include <SFML/Graphics.hpp>
 #include <SFML/Audio.hpp>
@@ -11,11 +14,12 @@ RenderWindow window({ 1024,760 }, L"Crossing Street - Đồ án TH KTLT 1712834"
 
 // ================================
 
+// Âm thanh
 struct SndEff {
 	SoundBuffer buff;
 	Sound s;
 };
-
+// Hình ảnh
 struct Sf {
 	Texture t;
 	Sprite s;
@@ -33,7 +37,7 @@ Sprite title;
 Music city;
 SndEff crashed[2];
 SndEff sucess;
-Music Win_s;
+
 
 // Nút
 struct button {
@@ -55,12 +59,28 @@ Sf dead;
 // Xe
 Sf CR[4], CL[4];
 
-// Lost menu
+// Lost screen
 Sf l_menu;
 button r_menu;
 button retry;
+SndEff lose_track;
+
+// Win screen
+Sf w_menu;
+Music Win_s;
 
 Event event;
+
+// Pause Menu
+Sf p_menu;
+button resume;
+button savegame;
+button loadgame;
+button quit;
+
+// Đèn xanh đỏ
+button r;
+button l;
 
 void LoadResources() {
 	BG.t.loadFromFile("Res/Background.png");
@@ -144,10 +164,8 @@ void LoadResources() {
 
 	r_menu._normal.loadFromFile("Res/menu.png");
 	r_menu.normal.setTexture(r_menu._normal);
-	r_menu.normal.setPosition(70, 83);
 	r_menu._pressed.loadFromFile("Res/menuP.png");
 	r_menu.pressed.setTexture(r_menu._pressed);
-	r_menu.pressed.setPosition(70, 83);
 	r_menu.Curr = &r_menu.normal;
 
 	retry._normal.loadFromFile("Res/again.png");
@@ -157,6 +175,9 @@ void LoadResources() {
 	retry.pressed.setTexture(retry._pressed);
 	retry.pressed.setPosition(618, 36);
 	retry.Curr = &retry.normal;
+
+	w_menu.t.loadFromFile("Res/Win.jpg");
+	w_menu.s.setTexture(w_menu.t);
 	
 	menu.openFromFile("Res/menu.wav");
 	menu.setVolume(50);
@@ -171,6 +192,75 @@ void LoadResources() {
 	sucess.s.setBuffer(sucess.buff);
 	sucess.s.setVolume(50);
 	Win_s.openFromFile("Res/Win.wav");
+
+	lose_track.buff.loadFromFile("Res/failed.wav");
+	lose_track.s.setBuffer(lose_track.buff);
+	lose_track.s.setVolume(60);
+
+	p_menu.t.loadFromFile("Res/Paused.png");
+	p_menu.s.setTexture(p_menu.t);
+	p_menu.s.setOrigin(Vector2f(p_menu.s.getTexture()->getSize().x * 0.5, p_menu.s.getTexture()->getSize().y*0.5));
+	p_menu.s.setPosition(512, 380);
+
+	resume._normal.loadFromFile("Res/resume.png");
+	resume.normal.setTexture(resume._normal);
+	resume.normal.setOrigin(Vector2f(resume.normal.getTexture()->getSize().x*0.5, resume.normal.getTexture()->getSize().y*0.5));
+	resume.normal.setPosition(512, 380 - 110);
+	resume._pressed.loadFromFile("Res/resumeP.png");
+	resume.pressed.setTexture(resume._pressed);
+	resume.pressed.setOrigin(Vector2f(resume.pressed.getTexture()->getSize().x*0.5, resume.pressed.getTexture()->getSize().y*0.5));
+	resume.pressed.setPosition(512, 380 - 110);
+	resume.Curr = &resume.normal;
+
+	savegame._normal.loadFromFile("Res/save.png");
+	savegame.normal.setTexture(savegame._normal);
+	savegame.normal.setOrigin(Vector2f(savegame.normal.getTexture()->getSize().x*0.5, savegame.normal.getTexture()->getSize().y*0.5));
+	savegame.normal.setPosition(512, 380 - 110 + 87);
+	savegame._pressed.loadFromFile("Res/saveP.png");
+	savegame.pressed.setTexture(savegame._pressed);
+	savegame.pressed.setOrigin(Vector2f(savegame.pressed.getTexture()->getSize().x*0.5, savegame.pressed.getTexture()->getSize().y*0.5));
+	savegame.pressed.setPosition(512, 380 - 110 + 87);
+	savegame.Curr = &savegame.normal;
+
+	loadgame._normal.loadFromFile("Res/Load2.png");
+	loadgame.normal.setTexture(loadgame._normal);
+	loadgame.normal.setOrigin(Vector2f(loadgame.normal.getTexture()->getSize().x*0.5, loadgame.normal.getTexture()->getSize().y*0.5));
+	loadgame.normal.setPosition(512, 380 - 110 + 87 * 2);
+	loadgame._pressed.loadFromFile("Res/Load2P.png");
+	loadgame.pressed.setTexture(loadgame._pressed);
+	loadgame.pressed.setOrigin(Vector2f(loadgame.pressed.getTexture()->getSize().x*0.5, loadgame.pressed.getTexture()->getSize().y*0.5));
+	loadgame.pressed.setPosition(512, 380 - 110 + 87 * 2);
+	loadgame.Curr = &loadgame.normal;
+
+	quit._normal.loadFromFile("Res/Quit.png");
+	quit.normal.setTexture(quit._normal);
+	quit.normal.setOrigin(Vector2f(quit.normal.getTexture()->getSize().x*0.5, quit.normal.getTexture()->getSize().y*0.5));
+	quit.normal.setPosition(512, 380 - 110 + 87 * 3);
+	quit._pressed.loadFromFile("Res/QuitP.png");
+	quit.pressed.setTexture(quit._pressed);
+	quit.pressed.setOrigin(Vector2f(quit.pressed.getTexture()->getSize().x*0.5, quit.pressed.getTexture()->getSize().y*0.5));
+	quit.pressed.setPosition(512, 380 - 110 + 87 * 3);
+	quit.Curr = &quit.normal;
+
+	r._normal.loadFromFile("Res/green.png");
+	r.normal.setTexture(r._normal);
+	r.normal.setOrigin(Vector2f(r.normal.getTexture()->getSize().x*0.5, r.normal.getTexture()->getSize().y*0.5));
+	r.normal.setPosition(945, 685);
+	r._pressed.loadFromFile("Res/red.png");
+	r.pressed.setTexture(r._pressed);
+	r.pressed.setOrigin(Vector2f(r.pressed.getTexture()->getSize().x*0.5, r.pressed.getTexture()->getSize().y*0.5));
+	r.pressed.setPosition(945, 685);
+	r.Curr = &r.normal;
+
+	l._normal.loadFromFile("Res/green.png");
+	l.normal.setTexture(l._normal);
+	l.normal.setOrigin(Vector2f(l.normal.getTexture()->getSize().x*0.5, l.normal.getTexture()->getSize().y*0.5));
+	l.normal.setPosition(85, 100);
+	l._pressed.loadFromFile("Res/red.png");
+	l.pressed.setTexture(l._pressed);
+	l.pressed.setOrigin(Vector2f(l.pressed.getTexture()->getSize().x*0.5, l.pressed.getTexture()->getSize().y*0.5));
+	l.pressed.setPosition(85, 100);
+	l.Curr = &l.normal;
 }
 
 // ================================
@@ -184,7 +274,11 @@ struct Point {
 Point Player;
 bool endgame = false;
 bool win = false;
+bool skipmenu = false;
+bool paused = false;
 bool again = true;
+int redlight = 0;
+Clock cd;
 int lv = 0;
 Point *finished = NULL; int fn = 0;
 
@@ -267,7 +361,7 @@ void Move() {
 	switch (event.key.code) {
 	case Keyboard::A: {
 		static int last = 0;
-		if (Player.x - 1 > 130) {
+		if (Player.x - 1 > 130 && !paused) {
 			Player.x -= 8;
 			Player.p = P[8 + last].s;
 			last++;
@@ -279,7 +373,7 @@ void Move() {
 	}
 	case Keyboard::D: {
 		static int last = 0;
-		if (Player.x + 1 < 1024) {
+		if (Player.x + 1 < 1024 && !paused) {
 			Player.x += 8;
 			Player.p = P[4 + last].s;
 			last++;
@@ -292,7 +386,7 @@ void Move() {
 
 	case Keyboard::S: {
 		static int last = 0;
-		if (Player.y + 1 < 760) {
+		if (Player.y + 1 < 760 && !paused) {
 			Player.y += 12;
 			Player.p = P[last].s;
 			last++;
@@ -305,7 +399,7 @@ void Move() {
 
 	case Keyboard::W: {
 		static int last = 0;
-		if (Player.y - 1 > 0) {
+		if (Player.y - 1 > 0 && !paused) {
 			Player.y -= 12;
 			Player.p = P[last].s;
 			last++;
@@ -315,12 +409,9 @@ void Move() {
 		}
 		break;
 	}
-
-	// ==== Để debug =====
-	case Keyboard::L:
-		cout << "Player pos: " << Player.x << " " << Player.y << endl;
+	case Keyboard::Escape:
+		paused = !paused;
 		break;
-	// ======================
 
 	default:
 		break;
@@ -349,15 +440,43 @@ void moveAcarL(Point &car) {
 	car.p.setPosition(car.x, car.y);
 }
 
+void red_light() {
+	if (redlight == 0 && cd.getElapsedTime().asSeconds() >= 8.0f) {	// Ko dừng mỗi 5s
+		int i = random(0, 100);
+		if (i >= 0 && i <= 25 - lv * 5) {	// 25 - lv*5 % tạo đèn đỏ
+			redlight = random(1, 2);
+			cd.restart();
+			if (redlight == 1)
+				r.Curr = &r.pressed;
+			else
+				l.Curr = &l.pressed;
+		}
+	}
+}
+
+void green_light() {
+	if (redlight != 0 && cd.getElapsedTime().asSeconds() >= 3.0f) {	// Dừng 3s
+		if (redlight == 1)
+			r.Curr = &r.normal;
+		else
+			l.Curr = &l.normal;
+		redlight = 0;
+	}
+}
+
 void MoveCars() {
-	for (int i = 0; i < cr1; i++)
-		moveAcarR(R1[i]);
-	for (int i = 0; i < cr2; i++)
-		moveAcarR(R2[i]);
-	for (int i = 0; i < cl3; i++)
-		moveAcarL(L3[i]);
-	for (int i = 0; i < cl4; i++)
-		moveAcarL(L4[i]);
+	if (redlight != 1) {
+		for (int i = 0; i < cr1; i++)
+			moveAcarR(R1[i]);
+		for (int i = 0; i < cr2; i++)
+			moveAcarR(R2[i]);
+	}
+	if (redlight != 2) {
+		for (int i = 0; i < cl3; i++)
+			moveAcarL(L3[i]);
+		for (int i = 0; i < cl4; i++)
+			moveAcarL(L4[i]);
+	}
 }
 
 void RunMenu() {
@@ -457,9 +576,44 @@ void Pross_Win() {
 
 void Pross_Lose() {
 	// Do st
+	lose_track.s.play();
 	again = false;
+	r_menu.normal.setPosition(70, 83);
+	r_menu.pressed.setPosition(70, 83);
 	while (true) {
+		if (r_menu.Curr->getGlobalBounds().contains(Mouse::getPosition(window).x, Mouse::getPosition(window).y))
+			r_menu.Curr = &r_menu.pressed;
+		else
+			r_menu.Curr = &r_menu.normal;
 
+		if (retry.Curr->getGlobalBounds().contains(Mouse::getPosition(window).x, Mouse::getPosition(window).y))
+			retry.Curr = &retry.pressed;
+		else
+			retry.Curr = &retry.normal;
+
+		if (Exit.Curr->getGlobalBounds().contains(Mouse::getPosition(window).x, Mouse::getPosition(window).y))
+			Exit.Curr = &Exit.pressed;
+		else
+			Exit.Curr = &Exit.normal;
+
+		if (window.pollEvent(event)) {
+			if (event.type == Event::Closed) {
+				window.close();
+				break;
+			}
+			if (event.type == Event::MouseButtonPressed && event.key.code == Mouse::Left) {
+				if (r_menu.Curr->getGlobalBounds().contains(Mouse::getPosition(window).x, Mouse::getPosition(window).y))
+					break;
+				else if (retry.Curr->getGlobalBounds().contains(Mouse::getPosition(window).x, Mouse::getPosition(window).y)) {
+					skipmenu = true;
+					break;
+				}
+				else if (Exit.Curr->getGlobalBounds().contains(Mouse::getPosition(window).x, Mouse::getPosition(window).y)) {
+					window.close();
+					break;
+				}
+			}
+		}
 
 		window.clear();
 		window.draw(l_menu.s);
@@ -473,56 +627,173 @@ void Pross_Lose() {
 void Pross_End() {
 	// do st
 	again = false;
+	Win_s.play();
+	r_menu.normal.setPosition(595, 695);
+	r_menu.pressed.setPosition(595, 695);
+	while (true) {
+		if (r_menu.Curr->getGlobalBounds().contains(Mouse::getPosition(window).x, Mouse::getPosition(window).y))
+			r_menu.Curr = &r_menu.pressed;
+		else
+			r_menu.Curr = &r_menu.normal;
+
+		if (Exit.Curr->getGlobalBounds().contains(Mouse::getPosition(window).x, Mouse::getPosition(window).y))
+			Exit.Curr = &Exit.pressed;
+		else
+			Exit.Curr = &Exit.normal;
+
+		if (window.pollEvent(event)) {
+			if (event.type == Event::Closed) {
+				window.close();
+				break;
+			}
+			if (event.type == Event::MouseButtonPressed && event.key.code == Mouse::Left) {
+				if (r_menu.Curr->getGlobalBounds().contains(Mouse::getPosition(window).x, Mouse::getPosition(window).y))
+					break;
+				else if (Exit.Curr->getGlobalBounds().contains(Mouse::getPosition(window).x, Mouse::getPosition(window).y)) {
+					window.close();
+					break;
+				}
+			}
+		}
+
+		window.clear();
+		window.draw(w_menu.s);
+		window.draw(*r_menu.Curr);
+		window.draw(*Exit.Curr);
+		window.display();
+	}
+}
+
+void Run_PausedMenu() {
+	while (true) {
+		if (resume.Curr->getGlobalBounds().contains(Mouse::getPosition(window).x, Mouse::getPosition(window).y))
+			resume.Curr = &resume.pressed;
+		else
+			resume.Curr = &resume.normal;
+
+		if (savegame.Curr->getGlobalBounds().contains(Mouse::getPosition(window).x, Mouse::getPosition(window).y))
+			savegame.Curr = &savegame.pressed;
+		else
+			savegame.Curr = &savegame.normal;
+
+		if (loadgame.Curr->getGlobalBounds().contains(Mouse::getPosition(window).x, Mouse::getPosition(window).y))
+			loadgame.Curr = &loadgame.pressed;
+		else
+			loadgame.Curr = &loadgame.normal;
+
+		if (quit.Curr->getGlobalBounds().contains(Mouse::getPosition(window).x, Mouse::getPosition(window).y))
+			quit.Curr = &quit.pressed;
+		else
+			quit.Curr = &quit.normal;
+
+		if (window.pollEvent(event)) {
+			if (event.type == Event::Closed) {
+				window.close();
+				break;
+			}
+			if (event.type == Event::KeyPressed && event.key.code == Keyboard::Escape) {
+				paused = !paused;
+				break;
+			}
+			if (event.type == Event::MouseButtonPressed && event.key.code == Mouse::Left) {
+				if (resume.Curr->getGlobalBounds().contains(Mouse::getPosition(window).x, Mouse::getPosition(window).y)) {
+					paused = !paused;
+					break;
+				}
+				else if (quit.Curr->getGlobalBounds().contains(Mouse::getPosition(window).x, Mouse::getPosition(window).y)) {
+					window.close();
+					break;
+				}
+				else if (savegame.Curr->getGlobalBounds().contains(Mouse::getPosition(window).x, Mouse::getPosition(window).y)) {
+					cout << "Save chua xai dc ahjhj" << endl;
+					break;
+				}
+				else if (loadgame.Curr->getGlobalBounds().contains(Mouse::getPosition(window).x, Mouse::getPosition(window).y)) {
+					cout << "Load cung chua xai dc ahjhj" << endl;
+					break;
+				}
+			}
+		}
+
+		window.clear();
+		window.draw(BG.s);
+		DrawCars();
+		window.draw(*r.Curr);
+		window.draw(*l.Curr);
+		for (int i = 0; i < fn; i++)
+			window.draw(finished[i].p);
+		window.draw(Player.p);
+
+		window.draw(p_menu.s);
+		window.draw(*resume.Curr);
+		window.draw(*savegame.Curr);
+		window.draw(*loadgame.Curr);
+		window.draw(*quit.Curr);
+
+		window.display();
+	}
 }
 
 void Run() {
 	city.setLoop(true);
 	city.play();
 	while (window.isOpen() && !endgame) {
+		red_light();
+		green_light();
 		window.pollEvent(event);
 		if (event.type == Event::Closed)
 			window.close();
-
 		if (event.type == Event::KeyPressed)
 			Move();
-		MoveCars();
 
-		if (CheckLose()) {
-			city.stop();
-			win = false;
-			crashed[0].s.play();
-			crashed[1].s.play();
-			Player.p = dead.s;
-			Player.p.setPosition(Player.x, Player.y);
+		if (!paused) {
+			MoveCars();
 
+			if (CheckLose()) {
+				city.stop();
+				win = false;
+				crashed[0].s.play();
+				crashed[1].s.play();
+				Player.p = dead.s;
+				Player.p.setPosition(Player.x, Player.y);
+
+				window.clear();
+				window.draw(BG.s);
+				DrawCars();
+				window.draw(*r.Curr);
+				window.draw(*l.Curr);
+				for (int i = 0; i < fn; i++)
+					window.draw(finished[i].p);
+				window.draw(Player.p);
+				window.display();
+				while (crashed[1].s.getStatus() != Sound::Stopped) {}
+				break;
+			}
+			if (CheckWin(lv + 1))
+				break;
 			window.clear();
 			window.draw(BG.s);
 			DrawCars();
+			window.draw(*r.Curr);
+			window.draw(*l.Curr);
 			for (int i = 0; i < fn; i++)
 				window.draw(finished[i].p);
 			window.draw(Player.p);
 			window.display();
-			while (crashed[1].s.getStatus() != Sound::Stopped) {}
-			break;
 		}
-		if (CheckWin(lv+1))
-			break;
-		window.clear();
-		window.draw(BG.s);
-		DrawCars();
-		for (int i = 0; i < fn; i++)
-			window.draw(finished[i].p);
-		window.draw(Player.p);
-		window.display();
+		else
+			Run_PausedMenu();
+
 		Sleep(10);
 	}
-	if (win)
-		if (endgame)
-			Pross_End();
+	if (window.isOpen())
+		if (win)
+			if (endgame)
+				Pross_End();
+			else
+				Pross_Win();
 		else
-			Pross_Win();
-	else
-		Pross_Lose();
+			Pross_Lose();
 
 	city.stop();
 }
@@ -558,7 +829,10 @@ int main() {
 	srand(time(NULL));
     LoadResources();
 	while (window.isOpen()) {
-		RunMenu();
+		if (!skipmenu) {
+			RunMenu();
+		}
+		skipmenu = false;
 		while (again && window.isOpen()) {
 			Setup();
 			Run();
@@ -577,4 +851,8 @@ int main() {
    - Road 3: 320 L
    - Road 4: 200 L
    - Finish: 100 - 90
+*/
+
+/*
+ http://flamingtext.com/
 */
