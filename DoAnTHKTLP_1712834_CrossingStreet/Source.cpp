@@ -82,6 +82,12 @@ button quit;
 button r;
 button l;
 
+// Menu save
+Sf savemenu;
+
+// Text
+Font font;
+
 void LoadResources() {
 	BG.t.loadFromFile("Res/Background.png");
 	BG.s.setTexture(BG.t);
@@ -261,6 +267,13 @@ void LoadResources() {
 	l.pressed.setOrigin(Vector2f(l.pressed.getTexture()->getSize().x*0.5, l.pressed.getTexture()->getSize().y*0.5));
 	l.pressed.setPosition(85, 100);
 	l.Curr = &l.normal;
+
+	savemenu.t.loadFromFile("Res/SaveScr.png");
+	savemenu.s.setTexture(savemenu.t);
+	savemenu.s.setOrigin(Vector2f(savemenu.s.getTexture()->getSize().x*0.5, savemenu.s.getTexture()->getSize().y*0.5));
+	savemenu.s.setPosition(512, 380);
+
+	font.loadFromFile("Res/font.ttf");
 }
 
 // ================================
@@ -664,6 +677,52 @@ void Pross_End() {
 	}
 }
 
+void SaveMenu() {
+	String savepath;
+	Text text;
+	text.setFont(font);
+	text.setPosition(512 - 120, 370);
+	text.setCharacterSize(30);
+	text.setFillColor(Color::Black);
+	while (true) {
+		if (window.pollEvent(event)) {
+			if (event.type == Event::Closed) {
+				window.close();
+				break;
+			}
+			if (event.type == Event::TextEntered && (event.text.unicode >=49 && event.text.unicode <= 122)) {
+				savepath += event.text.unicode;
+				text.setString(savepath);
+				cout << event.text.unicode << endl;
+			}
+			if (event.type == Event::TextEntered && event.text.unicode == 8) {
+				if (savepath.getSize() > 0) {
+					savepath.erase(savepath.getSize() - 1);
+					text.setString(savepath);
+				}
+			}
+			if (event.type == Event::KeyPressed)
+				if (event.key.code == Keyboard::Escape)
+					break;
+				else if (event.key.code == Keyboard::Return)
+					break;
+
+		}
+
+		window.clear();
+		window.draw(BG.s);
+		DrawCars();
+		window.draw(*r.Curr);
+		window.draw(*l.Curr);
+		for (int i = 0; i < fn; i++)
+			window.draw(finished[i].p);
+		window.draw(Player.p);
+		window.draw(savemenu.s);
+		window.draw(text);
+		window.display();
+	}
+}
+
 void Run_PausedMenu() {
 	while (true) {
 		if (resume.Curr->getGlobalBounds().contains(Mouse::getPosition(window).x, Mouse::getPosition(window).y))
@@ -706,6 +765,7 @@ void Run_PausedMenu() {
 				}
 				else if (savegame.Curr->getGlobalBounds().contains(Mouse::getPosition(window).x, Mouse::getPosition(window).y)) {
 					cout << "Save chua xai dc ahjhj" << endl;
+					SaveMenu();
 					break;
 				}
 				else if (loadgame.Curr->getGlobalBounds().contains(Mouse::getPosition(window).x, Mouse::getPosition(window).y)) {
