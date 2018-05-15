@@ -91,6 +91,135 @@ Sf loadmenu;
 // Text
 Font font;
 
+// Hàm load các hình ảnh, âm thanh cần dùng - Line 223
+void LoadResources();
+
+// Struct tọa độ 2D
+struct Point {
+	float x;
+	float y;
+	Sprite p;
+};
+
+Point Player;
+
+bool endgame = false;
+bool win = false;
+bool skipmenu = false;
+bool skipsetup = false;
+bool paused = false;
+bool again = true;
+int redlight = 0;
+Clock cd;
+int lv = 0;
+
+// Mảng những người đã qua trước
+Point *finished = NULL; int fn = 0;
+
+// Các mảng xe
+Point *R1 = NULL; int cr1 = 0;
+Point *R2 = NULL; int cr2 = 0;
+Point *L3 = NULL; int cl3 = 0;
+Point *L4 = NULL; int cl4 = 0;
+
+// Hàm check va chạm - Line 416
+bool PlayerColision(Sprite a);
+
+// Hàm tạo ngẫu nhiên số giữa a và b - Line 424
+int random(int a, int b);
+
+// Hàm nới rộng mảng - Line 430
+void Resize(Point *&A, int &n);
+
+// Hàm thêm count xe ngẫu nhiên trên hàng yrow - Line 444
+void addCars(Point *&A, int &n, char c, int yrow, int count);
+
+// Hàm tạo các thành phần chuẩn bị cho 1 lv - Line 461
+void Setup();
+
+// Hàm xóa tất cả dữ liệu khi kết thúc lv - Line 473
+void Reset();
+
+// Hàm load, trả false nếu mở file thất bại - Line 497
+bool LoadToGame(const char* filepath);
+
+// Hàm vẽ xe trong mỗi vòng lặp game - Line 577
+void DrawCars();
+
+// Hàm xử lí input bàn phím - Line 588
+void Move();
+
+// ====== Nhóm hàm xử lí xe chạy =====
+
+void moveAcarR(Point &car); // Nhích 1 xe sang phải - Line 649
+void moveAcarL(Point &car);	//          ...    trái - Line 660
+
+void red_light();	// Xử lí ngẫu nhiên tạo đèn đỏ - Line 671
+void green_light();	// Xử lí đếm thời gian để tắt đèn đỏ - Line 685
+
+void MoveCars();	// Hàm xử lí tổng hợp - Line 695
+
+// ======================================
+
+// Hàm xử lí giao diện tải game ở menu và trong game
+void Load_Menu();	// Line 710
+void Load_Paused();	// Line 759
+
+// Hàm xử lí giao diện màn hình chính - Line 817
+void RunMenu();
+
+// Hàm kiểm tra qua màn, thắng, thua
+bool CheckWin(int n);	// Line 868
+bool CheckLose();		// Line 890
+
+// Hàm xử lí qua màn
+void Process_Win();	// Line 909
+
+// Hàm xử lí giao diện thắng, thua
+void Process_Lose();	// Line 913
+void Process_End();		// Line 962
+
+// Hàm xử lí giao diện lưu game
+void SaveMenu();		// Line 1001
+
+// Hàm xử lí giao diện dừng game
+void Run_PausedMenu();	// Line 1082
+
+// Hàm xử lí giao diện game
+void Run();				// Line 1153
+
+// Hàm khởi tạo game lại ban đầu (lv 1)
+void ResetGame();		// Line 1219
+
+// Ẩn màn hình console
+void CloseConsole();	// Line 1229
+
+int main() {
+	CloseConsole();
+
+	srand(time(NULL));
+    LoadResources();
+	while (window.isOpen()) {
+		if (!skipmenu)
+			RunMenu();
+		else
+			skipmenu = false;
+		while (again && window.isOpen()) {
+			if (!skipsetup)
+				Setup();
+			else
+				skipsetup = false;
+			Run();
+			Reset();
+		}
+		
+		ResetGame();
+	}
+	return 0;
+}
+
+// =================================== Source code ============================================
+
 void LoadResources() {
 	BG.t.loadFromFile("Res/Background.png");
 	BG.s.setTexture(BG.t);
@@ -187,7 +316,7 @@ void LoadResources() {
 
 	w_menu.t.loadFromFile("Res/Win.jpg");
 	w_menu.s.setTexture(w_menu.t);
-	
+
 	menu.openFromFile("Res/menu.wav");
 	menu.setVolume(50);
 	city.openFromFile("Res/traffic.wav");
@@ -284,43 +413,17 @@ void LoadResources() {
 	font.loadFromFile("Res/font.ttf");
 }
 
-// ================================
+bool PlayerColision(Sprite a) {
+	FloatRect c_m = Player.p.getGlobalBounds();
 
-struct Point {
-	float x;
-	float y;
-	Sprite p;
-};
+	FloatRect collision_mask(c_m.left + c_m.width / 3, c_m.top + c_m.height*0.85, c_m.width / 3, c_m.height*0.01);
 
-Point Player;
-bool endgame = false;
-bool win = false;
-bool skipmenu = false;
-bool skipsetup = false;
-bool paused = false;
-bool again = true;
-int redlight = 0;
-Clock cd;
-int lv = 0;
-Point *finished = NULL; int fn = 0;
-
-Point *R1 = NULL; int cr1 = 0;
-Point *R2 = NULL; int cr2 = 0;
-Point *L3 = NULL; int cl3 = 0;
-Point *L4 = NULL; int cl4 = 0;
-
-bool PlayerColision (Sprite a) {
-	FloatRect c_m = Player.p.getGlobalBounds();		
-
-	FloatRect collision_mask(c_m.left + c_m.width/3,c_m.top + c_m.height*0.85, c_m.width/3, c_m.height*0.01);
-	
 	return a.getGlobalBounds().intersects(collision_mask);
 }
 
 int random(int a, int b) {
 	if (a >= b)
 		return a;
-
 	return rand() % (b - a + 1) + a;
 }
 
@@ -339,12 +442,12 @@ void Resize(Point *&A, int &n) {
 }
 
 void addCars(Point *&A, int &n, char c, int yrow, int count) {
-	float mid = 1000.0f / (count+1);
+	float mid = 1000.0f / (count + 1);
 	float CW = 100;
 	float pos = CW;
 	while (pos + mid < 1024 - CW) {
 		Resize(A, n);
-		A[n - 1].x = random(pos, pos + mid-CW);
+		A[n - 1].x = random(pos, pos + mid - CW);
 		A[n - 1].y = yrow;
 		if (c == 'L' || c == 'l')
 			A[n - 1].p = CL[random(0, 3)].s;
@@ -361,10 +464,10 @@ void Setup() {
 	Player.p = P[0].s;
 	Player.p.setPosition(Player.x, Player.y);
 
-	addCars(R1, cr1, 'R', 615, random(1 + lv,3 + lv));
-	addCars(R2, cr2, 'R', 460, random(1 + lv,3 + lv));
-	addCars(L3, cl3, 'L', 320, random(1 + lv,3 + lv));
-	addCars(L4, cl4, 'L', 200, random(1 + lv,3 + lv));
+	addCars(R1, cr1, 'R', 615, random(1 + lv, 3 + lv));
+	addCars(R2, cr2, 'R', 460, random(1 + lv, 3 + lv));
+	addCars(L3, cl3, 'L', 320, random(1 + lv, 3 + lv));
+	addCars(L4, cl4, 'L', 200, random(1 + lv, 3 + lv));
 }
 
 void Reset() {
@@ -373,7 +476,7 @@ void Reset() {
 		finished = NULL;
 		fn = 0;
 	}
-	if(R1)
+	if (R1)
 		delete[] R1;
 	R1 = NULL;
 	cr1 = 0;
@@ -419,7 +522,7 @@ bool LoadToGame(const char* filepath) {
 
 			finished[i].p.setPosition(finished[i].x, finished[i].y);
 		}
-	
+
 	f >> n;
 	for (int i = 0; i < n; i++) {
 		f >> x;
@@ -684,7 +787,7 @@ void Load_Paused() {
 					break;
 				else if (event.key.code == Keyboard::Return) {
 					if (LoadToGame((savepath.toAnsiString() + ".txt").c_str())) {
-						//do something
+						paused = !paused;
 					}
 					break;
 				}
@@ -774,7 +877,7 @@ bool CheckWin(int n) {
 		sucess.s.play();
 	}
 	if (fn == n) {
-		if(fn == 3) 
+		if (fn == 3)
 			endgame = true;
 		win = true;
 		sucess.s.play();
@@ -803,12 +906,11 @@ bool CheckLose() {
 	return false;
 }
 
-void Pross_Win() {
+void Process_Win() {
 	lv++;
 }
 
-void Pross_Lose() {
-	// Do st
+void Process_Lose() {
 	lose_track.s.play();
 	again = false;
 	r_menu.normal.setPosition(70, 83);
@@ -857,8 +959,7 @@ void Pross_Lose() {
 	}
 }
 
-void Pross_End() {
-	// do st
+void Process_End() {
 	again = false;
 	Win_s.play();
 	r_menu.normal.setPosition(595, 695);
@@ -917,13 +1018,13 @@ void SaveMenu() {
 						text.setString(savepath);
 					}
 				}
-				else if (event.text.unicode == 8) 
+				else if (event.text.unicode == 8)
 					if (savepath.getSize() > 0) {
 						savepath.erase(savepath.getSize() - 1);
 						text.setString(savepath);
 					}
 			if (event.type == Event::KeyPressed)
-				if (event.key.code == Keyboard::Escape) 
+				if (event.key.code == Keyboard::Escape)
 					break;
 				else if (event.key.code == Keyboard::Return) {
 					ofstream f;
@@ -938,7 +1039,7 @@ void SaveMenu() {
 					f << endl;
 
 					f << cr1 << endl;
-					for (int i = 0; i < cr1; i++) 
+					for (int i = 0; i < cr1; i++)
 						f << R1[i].x << " " << R1[i].y << "  ";
 					f << endl;
 
@@ -948,20 +1049,20 @@ void SaveMenu() {
 					f << endl;
 
 					f << cl3 << endl;
-					for (int i = 0; i < cl3; i++) 
+					for (int i = 0; i < cl3; i++)
 						f << L3[i].x << " " << L3[i].y << "  ";
 					f << endl;
 
 					f << cl4 << endl;
-					for (int i = 0; i < cl4; i++) 
+					for (int i = 0; i < cl4; i++)
 						f << L4[i].x << " " << L4[i].y << "  ";
 					f << endl;
 
 					f << redlight << endl;
-
+					paused = !paused;
 					break;
 				}
-				
+
 
 				window.clear();
 				window.draw(BG.s);
@@ -1102,15 +1203,15 @@ void Run() {
 
 		Sleep(10);
 	}
-	
+
 	if (window.isOpen())
 		if (win)
 			if (endgame)
-				Pross_End();
+				Process_End();
 			else
-				Pross_Win();
+				Process_Win();
 		else
-			Pross_Lose();
+			Process_Lose();
 
 	city.stop();
 }
@@ -1122,41 +1223,7 @@ void ResetGame() {
 	again = true;
 }
 
-int main() {
+void CloseConsole() {
 	HWND hWnd = GetConsoleWindow();
 	ShowWindow(hWnd, SW_HIDE);
-
-	srand(time(NULL));
-    LoadResources();
-	while (window.isOpen()) {
-		if (!skipmenu)
-			RunMenu();
-		else
-			skipmenu = false;
-		while (again && window.isOpen()) {
-			if (!skipsetup)
-				Setup();
-			else
-				skipsetup = false;
-			Run();
-			Reset();
-		}
-		
-		ResetGame();
-	}
-	return 0;
 }
-
-/*	Note to self:
-   - 1024x760
-   - Start: 500x720
-   - Road 1: 615 R
-   - Road 2: 460 R
-   - Road 3: 320 L
-   - Road 4: 200 L
-   - Finish: 100 - 90
-*/
-
-/*
- http://flamingtext.com/
-*/
