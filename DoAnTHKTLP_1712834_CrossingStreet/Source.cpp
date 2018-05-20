@@ -1204,6 +1204,8 @@ void Run() {
 		Sleep(10);
 	}
 
+	city.stop();
+
 	if (window.isOpen())
 		if (win)
 			if (endgame)
@@ -1212,8 +1214,6 @@ void Run() {
 				Process_Win();
 		else
 			Process_Lose();
-
-	city.stop();
 }
 
 void ResetGame() {
